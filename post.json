@@ -1,0 +1,36 @@
+{"scenes": [{"start": 0, "stop": 19, "images": ["https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene0_0.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene0_1.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene0_2.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene0_3.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene0_4.jpg"]}
+, {"start": 19, "stop": 35, "images": ["https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene1_0.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene1_1.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene1_2.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene1_3.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene1_4.jpg"]}
+, {"start": 35, "stop": 53, "images": ["https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene2_0.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene2_1.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene2_2.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene2_3.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene2_4.jpg"]}
+, {"start": 53, "stop": 69, "images": ["https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene3_0.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene3_1.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene3_2.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene3_3.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene3_4.jpg"]}
+, {"start": 69, "stop": 79, "images": ["https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene4_0.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene4_1.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene4_2.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene4_3.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene4_4.jpg"]}
+, {"start": 79, "stop": 95, "images": ["https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene5_0.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene5_1.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene5_2.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene5_3.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene5_4.jpg"]}
+, {"start": 95, "stop": 113, "images": ["https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene6_0.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene6_1.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene6_2.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene6_3.jpg"
+, "https://ddrt7xb018jgg.cloudfront.net/test/gabo/scene6_4.jpg"]}]
+, "audio": "https://ddrt7xb018jgg.cloudfront.net/test/gabo/gabo.m4a"}
