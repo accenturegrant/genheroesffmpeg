@@ -22,11 +22,14 @@ def do_ffmpeg(images, audio_file, uuid, duration=DEFAULT_DURATION, frame_rate=DE
 
 def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_resolution):
     image_ct = len(images)
-    image_dur_sec = float(duration)/len(images)
+    #scene_dur_sec = float(duration)/len(images)
+    #image_dur_sec = scene_dur_sec / image_ct * 2
+    image_dur_sec = float(duration) / image_ct * 2
     trans_dur_sec = image_dur_sec / 2
 
     #initial command with audio
-    ffmpeg_command = ['ffmpeg -i {} -loop 1'.format(audio_file)]
+    ffmpeg_command = ['./ffmpeg -i {}'.format(audio_file)]
+
 
     #add images
     for img in images:
@@ -50,11 +53,11 @@ def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_re
         ''.join([
             ''.join(xfade_commands),
             ''.join([
-                '\'scale={}:-2,setsar=1:1,format=yuvj420p[v]\''.format(video_resolution)
+                ',scale={}:-2,setsar=1:1,format=yuvj420p[v]\''.format(video_resolution)
             ])
         ]),
-        '-map','\'[v]\'',
-        '-map', '0:a', 
+        '-map','[v]',
+        '-map', '0:a',
         '-c:a', 'aac',
         '-r', str(frame_rate),
         '-preset','ultrafast',
@@ -65,8 +68,10 @@ def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_re
         '-hls_list_size', str(duration),
         '-hls_flags', 'independent_segments',
         '-hls_segment_type', 'fmp4',
-        '-hls_segment_filename', 'stream_%v/data%02d.ts',
-        '-var_stream_map', 'v:0,a:0', f"stream_%v/{uuid}.m3u8",
+        '-hls_segment_filename', '/var/www/html/stream_%v/data%02d.ts',
+        '-var_stream_map', '"v:0,a:0"', f"/var/www/html/stream_%v/{uuid}.m3u8",
         '-y', os.path.join('output/', '{}.mp4'.format(uuid))
     ]
+    print(' '.join(ffmpeg_command))
+    ffmpeg_command2 = "./ffmpeg -i /var/www/html/stream_%v/{}.m3u8 -bsf:a aac_adtstoasc -vcodec h264 -crf 28 /output/{}.mp4".format(uuid, uuid)
     return ffmpeg_command
