@@ -68,4 +68,4 @@ def download_audio(audio_url, uuid):
     return filename
 
 if __name__ == '__main__':
-    app.run(port=8000, debug=True)
+    app.run(host='0.0.0.0', port=443, debug=True)
