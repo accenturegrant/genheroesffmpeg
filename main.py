@@ -10,12 +10,6 @@ import os
 
 app = Flask(__name__)
 
-# AWS S3 Configuration
-AWS_ACCESS_KEY_ID = 'YOUR_ACCESS_KEY_ID'
-AWS_SECRET_ACCESS_KEY = 'YOUR_SECRET_ACCESS_KEY'
-S3_BUCKET_NAME = 'YOUR_BUCKET_NAME'
-S3_REGION_NAME = 'YOUR_BUCKET_REGION'
-
 # Configure Boto3 S3 Client
 #s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, region_name=S3_REGION_NAME)
 
@@ -42,6 +36,7 @@ def process():
     #except ClientError as e:
     #    return jsonify({'error': str(e)}), 500
 
+    upload_video(video_uuid)
     return jsonify({'message': 'Video processed and uploaded to S3 successfully!', 'url': output_path}), 200
 
 def download_images(scenes, uuid):
@@ -67,5 +62,9 @@ def download_audio(audio_url, uuid):
         file.write(res.content)
     return filename
 
+def upload_video(uuid):
+    s3 = boto3.client('s3')
+    s3.upload_file(f"./output/{uuid}.mp4", "276036-01-pub", f"{uuid}.mp4")
+    
 if __name__ == '__main__':
     app.run(port=8000, debug=True)
