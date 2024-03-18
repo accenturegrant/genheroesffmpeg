@@ -14,21 +14,23 @@ def do_ffmpeg(images, audio_file, uuid, duration=DEFAULT_DURATION, frame_rate=DE
     #get video duration
     duration = ffmpeg.probe(audio_file)['format']['duration']
     #build the ffmpeg command
-    ffmpeg_command = make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_resolution)
+    ffmpeg_commands = make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_resolution)
 
     # execute FFmpeg command
-    subprocess.run(' '.join(ffmpeg_command), shell=True)
+
+    print("running first command")
+    subprocess.run(' '.join(ffmpeg_commands[0]), shell=True)
+    print("converting to mp4")
+    subprocess.run(ffmpeg_commands[1], shell=True)
     return os.path.join('output/', '{}.mp4'.format(uuid))
 
 def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_resolution):
     image_ct = len(images)
-    #scene_dur_sec = float(duration)/len(images)
-    #image_dur_sec = scene_dur_sec / image_ct * 2
     image_dur_sec = float(duration) / image_ct * 2
     trans_dur_sec = image_dur_sec / 2
 
     #initial command with audio
-    ffmpeg_command = ['./ffmpeg -i {}'.format(audio_file)]
+    ffmpeg_command = ['ffmpeg -i {}'.format(audio_file)]
 
 
     #add images
@@ -53,7 +55,7 @@ def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_re
         ''.join([
             ''.join(xfade_commands),
             ''.join([
-                ',scale={}:-2,setsar=1:1,format=yuvj420p[v]\''.format(video_resolution)
+                '[body];[body]fade=in:st=0:d={},fade=out:st={}:d={},scale={}:-2,setsar=1:1,format=yuvj420p[v]\''.format(trans_dur_sec, trans_dur_sec * image_ct, trans_dur_sec, video_resolution)
             ])
         ]),
         '-map','[v]',
@@ -68,10 +70,8 @@ def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_re
         '-hls_list_size', str(duration),
         '-hls_flags', 'independent_segments',
         '-hls_segment_type', 'fmp4',
-        '-hls_segment_filename', '/var/www/html/stream_%v/data%02d.ts',
-        '-var_stream_map', '"v:0,a:0"', f"/var/www/html/stream_%v/{uuid}.m3u8",
-        '-y', os.path.join('output/', '{}.mp4'.format(uuid))
+        '-hls_segment_filename', f"/var/www/html/stream_%v/{uuid}/data%02d.ts",
+        '-var_stream_map', '"v:0,a:0"', f"/var/www/html/stream_%v/{uuid}/{uuid}.m3u8"
     ]
-    print(' '.join(ffmpeg_command))
-    ffmpeg_command2 = "./ffmpeg -i /var/www/html/stream_%v/{}.m3u8 -bsf:a aac_adtstoasc -vcodec h264 -crf 28 /output/{}.mp4".format(uuid, uuid)
-    return ffmpeg_command
+    ffmpeg_command2 = f"ffmpeg -y -i /var/www/html/stream_0/{uuid}/{uuid}.m3u8 -bsf:a aac_adtstoasc -vcodec h264 -crf 28 ./output/{uuid}.mp4"
+    return (ffmpeg_command, ffmpeg_command2)
