@@ -7,13 +7,18 @@ DEFAULT_FRAME_RATE = 24
 DEFAULT_RESOLUTION = '1920'
 DEFAULT_DURATION = 60   
 
+DIALOG_START_DELAY = 1
+DIALOG_START_DELAY_MILIS = DIALOG_START_DELAY * 1000
+DIALOG_END_PAD = 4
+
 soundtrack = "./music/AdobeSummit2024_Music.mp3"
 
 def do_ffmpeg(images, audio_file, uuid, duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION):
     #get video duration
     duration = ffmpeg.probe(audio_file)['format']['duration']
+    total_duration = float(duration) + DIALOG_START_DELAY + DIALOG_END_PAD
     #build the ffmpeg command
-    ffmpeg_commands = make_ffmpeg_commands(images, audio_file, uuid, duration, frame_rate, video_resolution)
+    ffmpeg_commands = make_ffmpeg_commands(images, audio_file, uuid, duration, total_duration, frame_rate, video_resolution)
 
     # execute FFmpeg commands
     print("merging audio tracks")
@@ -24,12 +29,12 @@ def do_ffmpeg(images, audio_file, uuid, duration=DEFAULT_DURATION, frame_rate=DE
     subprocess.run(ffmpeg_commands[2], shell=True)
     return os.path.join('output/', '{}.mp4'.format(uuid))
 
-def make_ffmpeg_commands(images, audio_file, uuid, duration, frame_rate, video_resolution):
+def make_ffmpeg_commands(images, audio_file, uuid, duration, total_duration, frame_rate, video_resolution):
     image_ct = len(images)
     image_dur_sec = float(duration) / image_ct * 2
     trans_dur_sec = image_dur_sec / 2
 
-    merge_audio_command = "ffmpeg -i {} -i {} -filter_complex \"[0:a][1:a]amerge=inputs=2[a]\" -map \"[a]\" -ac 2 \./tmp/{}/audio/final.aac".format(audio_file, soundtrack, uuid)
+    merge_audio_command = "ffmpeg -i {} -i {} -filter_complex \"[0:a][0:a]amerge=inputs=2,adelay={}|{:.5f},apad=pad_dur={:.5f}[dialog];[dialog][1:a]amerge=inputs=2[master];[master]areverse,afade=d={:.5f},areverse[edit]\" -map \"[edit]\"  -t {:.5f} -ac 2 ./tmp/{}/audio/final.aac".format(audio_file, soundtrack, DIALOG_START_DELAY_MILIS, DIALOG_START_DELAY_MILIS, DIALOG_END_PAD, DIALOG_END_PAD, total_duration, uuid)
     print(merge_audio_command)
     #initial command with audio
     ffmpeg_command = ['ffmpeg -i ./tmp/{}/audio/final.aac'.format(uuid)]
