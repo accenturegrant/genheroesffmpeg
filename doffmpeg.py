@@ -1,34 +1,38 @@
 import os
 import subprocess
 import ffmpeg
-from ffmpeg._run import Error
 
 # Configuration
 DEFAULT_FRAME_RATE = 24
 DEFAULT_RESOLUTION = '1920'
-DEFAULT_DURATION = 60
+DEFAULT_DURATION = 60   
+
+soundtrack = "./music/AdobeSummit2024_Music.mp3"
 
 def do_ffmpeg(images, audio_file, uuid, duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION):
     #get video duration
     duration = ffmpeg.probe(audio_file)['format']['duration']
     #build the ffmpeg command
-    ffmpeg_commands = make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_resolution)
+    ffmpeg_commands = make_ffmpeg_commands(images, audio_file, uuid, duration, frame_rate, video_resolution)
 
-    # execute FFmpeg command
-
-    print("running first command")
-    subprocess.run(' '.join(ffmpeg_commands[0]), shell=True)
+    # execute FFmpeg commands
+    print("merging audio tracks")
+    subprocess.run(ffmpeg_commands[0], shell=True)
+    print("creating video stream")
+    subprocess.run(' '.join(ffmpeg_commands[1]), shell=True)
     print("converting to mp4")
-    subprocess.run(ffmpeg_commands[1], shell=True)
+    subprocess.run(ffmpeg_commands[2], shell=True)
     return os.path.join('output/', '{}.mp4'.format(uuid))
 
-def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_resolution):
+def make_ffmpeg_commands(images, audio_file, uuid, duration, frame_rate, video_resolution):
     image_ct = len(images)
     image_dur_sec = float(duration) / image_ct * 2
     trans_dur_sec = image_dur_sec / 2
 
+    merge_audio_command = "ffmpeg -i {} -i {} -filter_complex \"[0:a][1:a]amerge=inputs=2[a]\" -map \"[a]\" -ac 2 \./tmp/{}/audio/final.aac".format(audio_file, soundtrack, uuid)
+    print(merge_audio_command)
     #initial command with audio
-    ffmpeg_command = ['ffmpeg -i {}'.format(audio_file)]
+    ffmpeg_command = ['ffmpeg -i ./tmp/{}/audio/final.aac'.format(uuid)]
 
 
     #add images
@@ -72,4 +76,4 @@ def make_ffmpeg_command(images, audio_file, uuid, duration, frame_rate, video_re
         '-var_stream_map', '"v:0,a:0"', f"/var/www/html/stream_%v/{uuid}/{uuid}.m3u8"
     ]
     ffmpeg_command2 = f"ffmpeg -y -i /var/www/html/stream_0/{uuid}/{uuid}.m3u8 -bsf:a aac_adtstoasc -vcodec h264 -crf 28 ./output/{uuid}.mp4"
-    return (ffmpeg_command, ffmpeg_command2)
+    return (merge_audio_command,ffmpeg_command, ffmpeg_command2)
