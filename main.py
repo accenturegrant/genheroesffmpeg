@@ -1,17 +1,27 @@
-from flask import Flask, request, jsonify
-import subprocess
-import boto3
-from botocore.exceptions import ClientError
-import concurrent.futures
-import uuid
-import requests
-from doffmpeg import do_ffmpeg
 import os
+import uuid
+import threading
+import boto3
+import requests
+from flask import Flask, request, jsonify
+from doffmpeg import do_ffmpeg
+
 
 app = Flask(__name__)
 
-# Configure Boto3 S3 Client
-#s3 = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY, region_name=S3_REGION_NAME)
+LOCAL = os.environ.get('local', False)
+
+
+#background task for video processing and upload
+def processVideo(scenes, video_uuid, audio_url):
+    images = download_images(scenes, video_uuid)
+    audio = download_audio(audio_url, video_uuid)
+    output_path = do_ffmpeg(images, audio, video_uuid)  
+    print("processing complete")
+    if not LOCAL:
+        print("uploading video")
+        upload_video(video_uuid) 
+
 
 @app.route('/process', methods=['POST'])
 def process():
@@ -24,20 +34,14 @@ def process():
     # Check if scenes and audio_url are provided
     if not scenes or not audio_url:
         return jsonify({'error': 'Invalid JSON format. Please provide scenes and audio URL.'}), 400
-
-    images = download_images(scenes, video_uuid)
-    audio = download_audio(audio_url, video_uuid)
-
-    output_path = do_ffmpeg(images, audio, video_uuid)
-
-    # Upload video to S3
-    #try:
-    #    s3.upload_file('output_video.mp4', S3_BUCKET_NAME, 'output_video.mp4')
-    #except ClientError as e:
-    #    return jsonify({'error': str(e)}), 500
-
-    upload_video(video_uuid)
-    return jsonify({'message': 'Video processed and uploaded to S3 successfully!', 'url': output_path}), 200
+    try:
+        print("starting background thread")
+        thread = threading.Thread(target=processVideo, args=(scenes, video_uuid, audio_url))
+        thread.start()
+        return jsonify({'message': 'Video processing.', 'uuid': video_uuid}), 200
+    except Exception as error:
+        return jsonify({'message': str(error)}), 500
+    
 
 def download_images(scenes, uuid):
     directory = os.path.join("tmp",uuid,"images")
