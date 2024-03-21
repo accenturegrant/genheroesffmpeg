@@ -1,7 +1,9 @@
 import os
 import uuid
+import logging
 import threading
 import boto3
+from botocore.exceptions import ClientError
 import requests
 from flask import Flask, request, jsonify
 from doffmpeg import do_ffmpeg
@@ -10,7 +12,9 @@ from doffmpeg import do_ffmpeg
 app = Flask(__name__)
 
 LOCAL = os.environ.get('local', False)
-
+S3_BUCKET = "276036-01-pub"
+PRE_SIGNED_URL_EXPIRY = 3600
+SECRET = "gA2jj/dYrpI6ZXiGjFmZ9MSX1lZ544a8"
 
 #background task for video processing and upload
 def processVideo(scenes, video_uuid, audio_url):
@@ -23,13 +27,39 @@ def processVideo(scenes, video_uuid, audio_url):
         upload_video(video_uuid) 
 
 
+@app.route('/upload', methods=['GET'])
+def get_upload_url():
+    data = request.json()
+    object_name = data.get('object_name', uuid.uuid4().hex)
+    secret = data.get('secret', '')
+    if not verify_secret(secret):
+        return jsonify({'message': "DENIED"}), 403
+
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.generate_presigned_post(
+            S3_BUCKET,
+            object_name,
+            None,
+            None,
+            PRE_SIGNED_URL_EXPIRY
+        )
+    except ClientError as e:
+        logging.error(e)
+        return jsonify({'message': str(e)}), 500
+    return jsonify({'message': "success!", "url": response['url']}), 200
+
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json
-
+    secret = data.get('secret', '')
+    if not verify_secret(secret):
+        return jsonify({'message': "DENIED"}), 403
+    
     scenes = data.get('scenes', [])
     video_uuid = str(data.get('uuid', uuid.uuid4().hex))
     audio_url = data.get('audio')
+    
 
     # Check if scenes and audio_url are provided
     if not scenes or not audio_url:
@@ -68,7 +98,11 @@ def download_audio(audio_url, uuid):
 
 def upload_video(uuid):
     s3 = boto3.client('s3')
-    s3.upload_file(f"./output/{uuid}.mp4", "276036-01-pub", f"{uuid}.mp4")
+    s3.upload_file(f"./output/{uuid}.mp4", S3_BUCKET, f"{uuid}.mp4")
+
+def verify_secret(secret):
+    #this could be better
+    return secret == SECRET
     
 if __name__ == '__main__':
     app.run(port=8000, debug=True)
