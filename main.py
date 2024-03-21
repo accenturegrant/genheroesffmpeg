@@ -47,7 +47,7 @@ def get_upload_url():
     except ClientError as e:
         logging.error(e)
         return jsonify({'message': str(e)}), 500
-    return jsonify({'message': "success!", "url": response['url']}), 200
+    return jsonify({'message': "success!", "url": response}), 200
 
 @app.route('/process', methods=['POST'])
 def process():
