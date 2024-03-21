@@ -6,10 +6,12 @@ import boto3
 from botocore.exceptions import ClientError
 import requests
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from doffmpeg import do_ffmpeg
 
 
 app = Flask(__name__)
+CORS(app, origins=["*"])
 
 LOCAL = os.environ.get('local', False)
 S3_BUCKET = "276036-01-pub"

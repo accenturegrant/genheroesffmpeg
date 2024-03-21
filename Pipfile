@@ -11,6 +11,7 @@ mutagen = "*"
 gunicorn = "*"
 ffmpeg-python = "*"
 boto = "*"
+flask-cors = "*"
 
 [dev-packages]
 
