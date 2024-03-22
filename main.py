@@ -31,7 +31,7 @@ def processVideo(scenes, video_uuid, audio_url, color="color"):
 
 @app.route('/upload', methods=['GET'])
 def get_upload_url():
-    data = request.json
+    data = request.args
     object_name = data.get('object_name', uuid.uuid4().hex)
     secret = data.get('secret', '')
     if not verify_secret(secret):
