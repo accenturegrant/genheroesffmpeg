@@ -28,7 +28,7 @@ def processVideo(scenes, video_uuid, audio_url, color="color"):
     print("processing complete")
     if not LOCAL:
         print("uploading video")
-        upload_video(video_dl)
+        upload_video(video_dl, video_uuid)
     else:
         print("not uploading video")
     print("cleaning up...")
@@ -66,7 +66,7 @@ def process():
         return jsonify({'message': "DENIED"}), 403
 
     scenes = data.get('scenes', [])
-    video_uuid = str(data.get('uuid', uuid.uuid4().hex))
+    video_uuid = data.get('uuid', uuid.uuid4().hex)
     audio_url = data.get('audio')
     color = data.get('color', 'color')
 
@@ -106,9 +106,10 @@ def download_audio(audio_url, uuid):
         file.write(res.content)
     return filename
 
-def upload_video(video_dl):
+def upload_video(video_dl, video_uuid):
     s3 = boto3.client('s3')
-    s3.upload_file(video_dl, S3_BUCKET, f"{uuid}.mp4")
+    res = s3.upload_file(video_dl, S3_BUCKET, f"{video_uuid}.mp4")
+
 
 def verify_secret(secret):
     #this could be better
