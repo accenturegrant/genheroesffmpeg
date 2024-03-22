@@ -31,9 +31,9 @@ def processVideo(scenes, video_uuid, audio_url, color="color"):
 
 @app.route('/upload', methods=['GET'])
 def get_upload_url():
-    data = request.json
-    object_name = data.get('object_name', uuid.uuid4().hex)
-    secret = data.get('secret', '')
+    #data = request.args
+    object_name = request.args.get('object_name', uuid.uuid4().hex)
+    secret = request.args.get('secret', '')
     if not verify_secret(secret):
         return jsonify({'message': "DENIED"}), 403
 
