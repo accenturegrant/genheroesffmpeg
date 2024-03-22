@@ -22,11 +22,11 @@ SECRET = "gA2jj/dYrpI6ZXiGjFmZ9MSX1lZ544a8"
 def processVideo(scenes, video_uuid, audio_url, color="color"):
     images = download_images(scenes, video_uuid)
     audio = download_audio(audio_url, video_uuid)
-    do_ffmpeg(images, audio, video_uuid, color)  
+    video_dl = do_ffmpeg(images, audio, video_uuid, color)
     print("processing complete")
     if not LOCAL:
         print("uploading video")
-        upload_video(video_uuid) 
+        upload_video(video_dl)
 
 
 @app.route('/upload', methods=['GET'])
@@ -57,12 +57,12 @@ def process():
     secret = data.get('secret', '')
     if not verify_secret(secret):
         return jsonify({'message': "DENIED"}), 403
-    
+
     scenes = data.get('scenes', [])
     video_uuid = str(data.get('uuid', uuid.uuid4().hex))
     audio_url = data.get('audio')
     color = data.get('color', 'color')
-    
+
 
     # Check if scenes and audio_url are provided
     if not scenes or not audio_url:
@@ -74,7 +74,7 @@ def process():
         return jsonify({'message': 'Video processing.', 'uuid': video_uuid}), 200
     except Exception as error:
         return jsonify({'message': str(error)}), 500
-    
+
 
 def download_images(scenes, uuid):
     directory = os.path.join("tmp",uuid,"images")
@@ -88,24 +88,24 @@ def download_images(scenes, uuid):
                 file.write(res.content)
             images.append(filename)
     return images
-            
+
 
 def download_audio(audio_url, uuid):
     directory = os.path.join("tmp",uuid,"audio")
     os.makedirs(directory, exist_ok=True)
     filename = 'tmp/{}/audio/{}.m4a'.format(uuid, uuid)
-    res = requests.get(audio_url) 
+    res = requests.get(audio_url)
     with open(filename, 'wb') as file:
         file.write(res.content)
     return filename
 
-def upload_video(uuid):
+def upload_video(video_dl):
     s3 = boto3.client('s3')
-    s3.upload_file(f"./output/{uuid}.mp4", S3_BUCKET, f"{uuid}.mp4")
+    s3.upload_file(video_dl, S3_BUCKET, f"{uuid}.mp4")
 
 def verify_secret(secret):
     #this could be better
     return secret == SECRET
-    
+
 if __name__ == '__main__':
     app.run(port=8000, debug=True)
