@@ -4,34 +4,33 @@ import ffmpeg
 
 # Configuration
 DEFAULT_FRAME_RATE = 24
-DEFAULT_RESOLUTION = 1920
-DEFAULT_DURATION = 60
+DEFAULT_RESOLUTION = '1920'
+DEFAULT_DURATION = 60   
 
 DIALOG_START_DELAY = 1
 DIALOG_START_DELAY_MILIS = DIALOG_START_DELAY * 1000
 DIALOG_END_PAD = 4
 TRANSITION_DIV = 1
 
-SOUNDTRACK = "./music/AdobeSummit2024_Music.mp3"
+soundtrack = "./music/AdobeSummit2024_Music.mp3"
 
-def do_ffmpeg(images, audio_file, uuid, color="colorful", duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION, soundtrack=SOUNDTRACK):
-    www_root = f"/var/www/html/{uuid}"
-    os.mkdir(www_root)
+def do_ffmpeg(images, audio_file, uuid, color="color", duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION):
     #get video duration
-    dialog_duration = ffmpeg.probe(audio_file)['format']['duration']
-    total_duration = float(dialog_duration) + DIALOG_START_DELAY + DIALOG_END_PAD
+    duration = ffmpeg.probe(audio_file)['format']['duration']
+    total_duration = float(duration) + DIALOG_START_DELAY + DIALOG_END_PAD
     #build the ffmpeg command
-    ffmpeg_command = make_ffmpeg_commands(images, audio_file, www_root, color, duration, total_duration, frame_rate, video_resolution, soundtrack)
+    ffmpeg_commands = make_ffmpeg_commands(images, audio_file, uuid, duration, total_duration, frame_rate, video_resolution)
 
-    input(' '.join(ffmpeg_command))
     # execute FFmpeg commands
-    #print("merging audio tracks")
-    #subprocess.run(ffmpeg_commands[0], shell=True)
+    print("merging audio tracks")
+    subprocess.run(ffmpeg_commands[0], shell=True)
     print("creating video stream")
-    subprocess.run(' '.join(ffmpeg_command), shell=True)
-    return os.path.join(www_root, 'download.mp4')
+    subprocess.run(' '.join(ffmpeg_commands[1]), shell=True)
+    print("converting to mp4")
+    subprocess.run(ffmpeg_commands[2], shell=True)
+    return os.path.join('output/', '{}.mp4'.format(uuid))
 
-def make_ffmpeg_commands(images, audio_file, path, color, duration, total_duration, frame_rate, video_resolution, soundtrack):
+def make_ffmpeg_commands(images, audio_file, uuid, duration, total_duration, frame_rate, video_resolution, color="color"):
     image_ct = len(images)
     image_dur_sec = float(duration) / image_ct * 2
     offset_duration = image_dur_sec / 2
@@ -39,89 +38,51 @@ def make_ffmpeg_commands(images, audio_file, path, color, duration, total_durati
     trans_div = 1.75 if color == "bw" else TRANSITION_DIV
     trans_dur_sec = offset_duration/trans_div
 
-    #audio inputs
-    ffmpeg_inputs = [ "-i {} -i {}".format(audio_file, soundtrack) ]
+    merge_audio_command = "ffmpeg -i {} -i {} -filter_complex \"[0:a][0:a]amerge=inputs=2,adelay={}|{:.5f},apad=pad_dur={:.5f}[dialog];[dialog][1:a]amerge=inputs=2[master];[master]areverse,afade=d={:.5f},areverse[edit]\" -map \"[edit]\"  -t {:.5f} -ac 2 ./tmp/{}/audio/final.aac".format(audio_file, soundtrack, DIALOG_START_DELAY_MILIS, DIALOG_START_DELAY_MILIS, DIALOG_END_PAD, DIALOG_END_PAD, total_duration, uuid)
 
-    #image inputs
+    #initial command with audio
+    ffmpeg_command = ['ffmpeg -i ./tmp/{}/audio/final.aac'.format(uuid)]
+
+
+    #add images
     for img in images:
-        ffmpeg_inputs+= [(
-            "-loop 1 framerate {:.5f} -t {:.5f} -i {}"
-           .format(frame_rate, image_dur_sec, img)
-        )]
+        ffmpeg_command += ['-loop 1 -t {:.5f} -i {}'.format(image_dur_sec, img)]
 
-    #filters
-    ffmpeg_filters = ['"']
-
-    #mix audio
-    ffmpeg_filters += [(
-        "[0:a][0:a]amerge=inputs=2,"
-        "adelay={0:d}|{0:d},"
-        "apad=pad_dur={1:.5f}[dialog];"
-        "[dialog][1:a]amerge=inputs=2[amaster];"
-        "[amaster]areverse,afade=d={1:.5f},areverse[aedit]"
-        .format(int(DIALOG_START_DELAY_MILIS), DIALOG_END_PAD)
-    )]
-
-    #format images (slight performance win)
-    for c in range(0, image_ct):
-        ffmpeg_filters += [(
-            "[{:d}]scale={:d}:-2,format=yuvj420p[hd{:d}];"
-            .format(c + 2, int(video_resolution), c)
-        )]
-
-    #crossfades
-    for c in range(0, image_ct):
-         ffmpeg_filters += [(
-            "[{}][hd{}]"
-            "xfade=transition=fade:duration={:.5f}:offset={:5f}[f{:d}]"
-            .format(
-                f"hd{c}" if c == 0 else f"f{c}",
-                c + 1,
-                trans_dur_sec,
-                offset_duration * (c),
-                c + 1
-            )
-        )]
-
-    ffmpeg_filters += [
-        "[f{0:d}]fade=in:st=0:d={1:.5f},fade=out:st={2:.5f}:d={1:.5f}[vedit]"
-        .format(image_ct, trans_dur_sec, offset_duration * image_ct)
-    ]
-
-    ffmpeg_filters += ['"']
-
-    #ffmpeg args
-    ffmpeg_encode_args = [
-        "-acodec", "aac",
-        "-vcodec", "libxh264",
-        "-pix_fmt", "yuvj420p",
-        "-r", str(frame_rate),
-        "-preset","ultrafast",
-        "-tune", "zerolatency",
-        "-flags", "+global_header"
-    ]
-
-    ffmpeg_hls_args = (
-        f'[f=hls:hls_time=2:hls_list_size={duration}:'
-        'hls_flags=independent_segments:hls_segment_type=fmp4:'
-        f'hls_segment_filename={path}/stream_%v/data%02d.ts]'
-        f'{path}/stream_%v/stream.m3u8'
-    )
-
-    ffmpeg_mp4_args = [ f"[movflags=+faststart]{path}/download.mp4" ]
-
-    ffmpeg_tee_args = ffmpeg_hls_args + ffmpeg_mp4_args
+    #add crossfade params
+    xfade_commands = ['\'']
+    for c in range(1, image_ct):
+        if c != image_ct - 1:
+             xfade_commands.append('[{}][{}]xfade=transition=fade:duration={:.5f}:offset={:5f}[f{}];'.format(
+                    c if c == 1 else f"f{c}", c + 1, trans_dur_sec, offset_duration * (c), c+1
+                ))
+        else:
+            xfade_commands.append('[{}][{}]xfade=transition=fade:duration={:5f}:offset={:5f}'.format(
+                c if c == 1 else f"f{c}", c + 1, trans_dur_sec, offset_duration * (c)
+            ))
 
     # put it all together
-    ffmpeg_command = [
-        "ffmpeg",
-        ' '.join(ffmpeg_inputs),
-        "-filter_complex",
-        ''.join(ffmpeg_filters),
-        '-map', '[vedit]',
-        '-map', '[aedit]',
-        ' '.join(ffmpeg_encode_args),
-        '-f', 'tee',
-        ffmpeg_tee_args
+    ffmpeg_command += [
+        '-filter_complex',
+        ''.join([
+            ''.join(xfade_commands),
+            ''.join([
+                '[body];[body]fade=in:st=0:d={},fade=out:st={}:d={},scale={}:-2,setsar=1:1,format=yuvj420p[v]\''.format(trans_dur_sec, trans_dur_sec * image_ct, trans_dur_sec, video_resolution)
+            ])
+        ]),
+        '-map','[v]',
+        '-map', '0:a',
+        '-c:a', 'aac',
+        '-r', str(frame_rate),
+        '-preset','ultrafast',
+        '-tune', 'zerolatency',
+        '-movflags', '+faststart',
+        '-f', 'hls',
+        '-hls_time', '2',
+        '-hls_list_size', str(duration),
+        '-hls_flags', 'independent_segments',
+        '-hls_segment_type', 'fmp4',
+        '-hls_segment_filename', f"/var/www/html/stream_%v/{uuid}/data%02d.ts",
+        '-var_stream_map', '"v:0,a:0"', f"/var/www/html/stream_%v/{uuid}/{uuid}.m3u8"
     ]
-    return ffmpeg_command
+    ffmpeg_command2 = f"ffmpeg -y -i /var/www/html/stream_0/{uuid}/{uuid}.m3u8 -bsf:a aac_adtstoasc -vcodec h264 -crf 28 ./output/{uuid}.mp4"
+    return (merge_audio_command,ffmpeg_command, ffmpeg_command2)
