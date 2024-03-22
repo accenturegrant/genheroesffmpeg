@@ -39,7 +39,7 @@ def make_ffmpeg_commands(images, audio_file, uuid, duration, total_duration, fra
     trans_dur_sec = offset_duration/trans_div
 
     merge_audio_command = "ffmpeg -i {} -i {} -filter_complex \"[0:a][0:a]amerge=inputs=2,adelay={}|{:.5f},apad=pad_dur={:.5f}[dialog];[dialog][1:a]amerge=inputs=2[master];[master]areverse,afade=d={:.5f},areverse[edit]\" -map \"[edit]\"  -t {:.5f} -ac 2 ./tmp/{}/audio/final.aac".format(audio_file, soundtrack, DIALOG_START_DELAY_MILIS, DIALOG_START_DELAY_MILIS, DIALOG_END_PAD, DIALOG_END_PAD, total_duration, uuid)
-    print(merge_audio_command)
+
     #initial command with audio
     ffmpeg_command = ['ffmpeg -i ./tmp/{}/audio/final.aac'.format(uuid)]
 
@@ -53,11 +53,11 @@ def make_ffmpeg_commands(images, audio_file, uuid, duration, total_duration, fra
     for c in range(1, image_ct):
         if c != image_ct - 1:
              xfade_commands.append('[{}][{}]xfade=transition=fade:duration={:.5f}:offset={:5f}[f{}];'.format(
-                    c if c == 1 else f"f{c}", c + 1, trans_dur_sec, trans_dur_sec * (c), c+1
+                    c if c == 1 else f"f{c}", c + 1, trans_dur_sec, offset_duration * (c), c+1
                 ))
         else:
             xfade_commands.append('[{}][{}]xfade=transition=fade:duration={:5f}:offset={:5f}'.format(
-                c if c == 1 else f"f{c}", c + 1, trans_dur_sec, trans_dur_sec * (c)
+                c if c == 1 else f"f{c}", c + 1, trans_dur_sec, offset_duration * (c)
             ))
 
     # put it all together
