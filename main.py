@@ -1,8 +1,10 @@
 import os
+import pathlib
 import uuid
 import logging
 import threading
 import boto3
+import shutil
 from botocore.exceptions import ClientError
 import requests
 from flask import Flask, request, jsonify
@@ -24,9 +26,15 @@ def processVideo(scenes, video_uuid, audio_url, color="color"):
     audio = download_audio(audio_url, video_uuid)
     do_ffmpeg(images, audio, video_uuid, color)  
     print("processing complete")
+   
     if not LOCAL:
         print("uploading video")
-        upload_video(video_uuid) 
+        upload_video(video_uuid)
+    else:
+        print("not uploading video")
+    print("cleaning up...")
+    shutil.rmtree("./tmp/{}".format(video_uuid), ignore_errors=True)
+    pathlib.Path.unlink("./output/{}.mp4".format(video_uuid))
 
 
 @app.route('/upload', methods=['GET'])
