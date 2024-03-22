@@ -5,7 +5,7 @@ import ffmpeg
 # Configuration
 DEFAULT_FRAME_RATE = 24
 DEFAULT_RESOLUTION = 1920
-#DEFAULT_DURATION = 60
+DEFAULT_DURATION = 60
 
 DIALOG_START_DELAY = 1
 DIALOG_START_DELAY_MILIS = DIALOG_START_DELAY * 1000
@@ -83,10 +83,10 @@ def make_ffmpeg_commands(images, audio_file, path, color, duration, total_durati
             )
         )]
 
-    ffmpeg_filters += [(
+    ffmpeg_filters += [
         "[f{0:d}]fade=in:st=0:d={1:.5f},fade=out:st={2:.5f}:d={1:.5f}[vedit]"
-        .format(image_ct, trans_dur_sec, offset_duration * image_ct) +
-    )]
+        .format(image_ct, trans_dur_sec, offset_duration * image_ct)
+    ]
 
     ffmpeg_filters += ['"']
 
