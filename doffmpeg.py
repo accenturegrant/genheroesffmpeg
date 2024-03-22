@@ -14,7 +14,7 @@ TRANSITION_DIV = 1
 
 soundtrack = "./music/AdobeSummit2024_Music.mp3"
 
-def do_ffmpeg(images, audio_file, uuid, duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION):
+def do_ffmpeg(images, audio_file, uuid, color="color", duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION):
     #get video duration
     duration = ffmpeg.probe(audio_file)['format']['duration']
     total_duration = float(duration) + DIALOG_START_DELAY + DIALOG_END_PAD

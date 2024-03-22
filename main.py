@@ -19,10 +19,10 @@ PRE_SIGNED_URL_EXPIRY = 3600
 SECRET = "gA2jj/dYrpI6ZXiGjFmZ9MSX1lZ544a8"
 
 #background task for video processing and upload
-def processVideo(scenes, video_uuid, audio_url):
+def processVideo(scenes, video_uuid, audio_url, color="color"):
     images = download_images(scenes, video_uuid)
     audio = download_audio(audio_url, video_uuid)
-    output_path = do_ffmpeg(images, audio, video_uuid)  
+    do_ffmpeg(images, audio, video_uuid, color)  
     print("processing complete")
     if not LOCAL:
         print("uploading video")
@@ -61,6 +61,7 @@ def process():
     scenes = data.get('scenes', [])
     video_uuid = str(data.get('uuid', uuid.uuid4().hex))
     audio_url = data.get('audio')
+    color = data.get('color', 'color')
     
 
     # Check if scenes and audio_url are provided
@@ -68,7 +69,7 @@ def process():
         return jsonify({'error': 'Invalid JSON format. Please provide scenes and audio URL.'}), 400
     try:
         print("starting background thread")
-        thread = threading.Thread(target=processVideo, args=(scenes, video_uuid, audio_url))
+        thread = threading.Thread(target=processVideo, args=(scenes, video_uuid, audio_url), kwargs={"color": color})
         thread.start()
         return jsonify({'message': 'Video processing.', 'uuid': video_uuid}), 200
     except Exception as error:
