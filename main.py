@@ -34,7 +34,7 @@ def processVideo(scenes, video_uuid, audio_url, color="color"):
         print("not uploading video")
     print("cleaning up...")
     shutil.rmtree("./tmp/{}".format(video_uuid), ignore_errors=True)
-    pathlib.Path.unlink("./output/{}.mp4".format(video_uuid))
+    pathlib.Path("./output/{}.mp4".format(video_uuid)).unlink()
 
 
 @app.route('/upload', methods=['GET'])
