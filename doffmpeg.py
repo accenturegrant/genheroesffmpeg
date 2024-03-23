@@ -87,7 +87,7 @@ def make_ffmpeg_command(images, audio_file, uuid, stream_path, dl_path, color, d
 
     ffmpeg_filters += [(
         "[f{0:d}]fade=in:st=0:d={1:.5f},fade=out:st={2:.5f}:d={1:.5f}[vedit]"
-        .format(image_ct - 1, trans_dur_sec, offset_duration * image_ct)
+        .format(image_ct - 1, trans_dur_sec, offset_duration * ( image_ct - 1 ))
     )]
 
     ffmpeg_filters += ['"']
@@ -105,7 +105,7 @@ def make_ffmpeg_command(images, audio_file, uuid, stream_path, dl_path, color, d
 
     ffmpeg_hls_args = (
         f'"[f=hls:hls_time=2:hls_list_size={duration}:'
-        'hls_flags=independent_segments:hls_segment_type=fmp4:'
+        'hls_flags=independent_segments:hls_segment_type=fmp4:hls_list_size=0:'
         f'hls_segment_filename={stream_path}/data%02d.ts]'
         f"{stream_path}/stream.m3u8"
     )
