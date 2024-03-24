@@ -94,7 +94,7 @@ def make_ffmpeg_command(images, audio_file, uuid, stream_path, dl_path, color, d
 
     #ffmpeg args
     ffmpeg_encode_args = [
-        "-acodec", "aac",
+        "-acodec", "ac3",
         "-vcodec", "libx264",
         "-pix_fmt", "yuvj420p",
         "-r", str(frame_rate),
