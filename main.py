@@ -75,6 +75,7 @@ def process():
     video_uuid = data.get('uuid', uuid.uuid4().hex)
     audio_url = data.get('audio')
     color = data.get('color', 'color')
+    print(f'COLOR: {color}')
 
 
     # Check if scenes and audio_url are provided
@@ -96,6 +97,7 @@ def download_images(scenes, uuid):
     for scene_index, scene in enumerate(scenes):
         for image_index, img in enumerate(scene.get('images', [])):
             filename = 'tmp/{}/images/scene{}_{}.jpg'.format(uuid, scene_index, image_index)
+            print(filename)
             res = requests.get(img)
             with open(filename, 'wb') as file:
                 file.write(res.content)

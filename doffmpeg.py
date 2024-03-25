@@ -19,7 +19,7 @@ WWW_ROOT = "/var/www/html"
 def do_ffmpeg(images, audio_file, uuid, color="colorful", duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION, soundtrack=SOUNDTRACK):
     stream_path = os.path.realpath( os.path.join(WWW_ROOT, 'streams', uuid) )
     dl_path = os.path.realpath('./output')
-    os.makedirs(stream_path)
+    os.makedirs(stream_path, exist_ok=True)
     os.makedirs(dl_path, exist_ok=True)
     #get video duration
     dialog_duration = ffmpeg.probe(audio_file)['format']['duration']
@@ -36,10 +36,10 @@ def do_ffmpeg(images, audio_file, uuid, color="colorful", duration=DEFAULT_DURAT
 def make_ffmpeg_command(images, audio_file, uuid, stream_path, dl_path, color, duration, frame_rate, video_resolution, soundtrack):
     image_ct = len(images)
     image_dur_sec = float(duration) / image_ct * 2
-    offset_duration = image_dur_sec / 2
+    offset_duration = float(image_dur_sec) / 2
 
     trans_div = 1.75 if color == "bw" else TRANSITION_DIV
-    trans_dur_sec = offset_duration/trans_div
+    trans_dur_sec = float(offset_duration) / trans_div
 
     #audio inputs
     ffmpeg_inputs = [ "-i {} -i {}".format(audio_file, soundtrack) ]
