@@ -35,28 +35,32 @@ def processVideo(scenes, video_uuid, audio_url, color="color"):
     shutil.rmtree("./tmp/{}".format(video_uuid), ignore_errors=True)
     pathlib.Path("./output/{}.mp4".format(video_uuid)).unlink()
 
-@app.route('/upload', methods=['GET'])
-def get_upload_url():
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    print(app.config['MAX_CONTENT_LENGTH'])
     data = request.args
-    object_name = data.get('object_name', uuid.uuid4().hex)
+    #object_name = data.get('object_name', uuid.uuid4().hex)
     secret = data.get('secret', '')
-
     if not verify_secret(secret):
         return jsonify({'message': "DENIED"}), 403
 
-    s3_client = boto3.client('s3')
+    uuid = data.get('uuid', '')
+
     try:
-        response = s3_client.generate_presigned_post(
-            S3_BUCKET,
-            object_name,
-            None,
-            None,
-            PRE_SIGNED_URL_EXPIRY
-        )
+        file = request.files['file']
+        upload_audio(file, uuid)
+    #    response = s3_client.generate_presigned_post(
+    #        S3_BUCKET,
+    #        object_name,
+    #        None,
+    #        None,
+    #        PRE_SIGNED_URL_EXPIRY
+    #    )
     except ClientError as e:
         logging.error(e)
         return jsonify({'message': str(e)}), 500
-    return jsonify({'message': "success!", "signed-url": response}), 200
+    return jsonify({'message': "success!"}), 200
+    #return jsonify({'message': "success!", "signed-url": response}), 200
 
 @app.route('/process', methods=['POST'])
 def process():
@@ -96,7 +100,6 @@ def download_images(scenes, uuid):
             images.append(filename)
     return images
 
-
 def download_audio(audio_url, uuid):
     directory = os.path.join("tmp",uuid,"audio")
     os.makedirs(directory, exist_ok=True)
@@ -110,6 +113,9 @@ def upload_video(video_dl, video_uuid):
     s3 = boto3.client('s3')
     res = s3.upload_file(video_dl, S3_BUCKET, f"{video_uuid}.mp4")
 
+def upload_audio(audio_dl, audio_uuid):
+    s3 = boto3.client('s3')
+    res = s3.upload_fileobj(audio_dl, S3_BUCKET, f"{audio_uuid}.wav")
 
 def verify_secret(secret):
     #this could be better
