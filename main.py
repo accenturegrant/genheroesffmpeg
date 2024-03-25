@@ -40,15 +40,17 @@ def upload_file():
     print(app.config['MAX_CONTENT_LENGTH'])
     data = request.args
     #object_name = data.get('object_name', uuid.uuid4().hex)
-    secret = data.get('secret', '')
+    secret = data.get('id', '')
     if not verify_secret(secret):
         return jsonify({'message': "DENIED"}), 403
 
     uuid = data.get('uuid', '')
 
+    print(f"Upload received: {uuid}.wav")
     try:
         file = request.files['file']
         upload_audio(file, uuid)
+        print(f"Upload completed: {uuid}.wav")
     #    response = s3_client.generate_presigned_post(
     #        S3_BUCKET,
     #        object_name,
