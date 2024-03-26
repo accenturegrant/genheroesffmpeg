@@ -19,6 +19,9 @@ WWW_ROOT = "./output" if platform.system() == 'Darwin' else "/var/www/html"
 def do_ffmpeg(images, audio_file, uuid, color="colorful", duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION, soundtrack=SOUNDTRACK):
     stream_path = os.path.realpath( os.path.join(WWW_ROOT, 'streams', uuid) )
     dl_path = os.path.realpath('./output')
+    if os.path.isdir(stream_path):
+        print('DUPLICATE CALL!!!!!')
+        return
     os.makedirs(stream_path, exist_ok=True)
     os.makedirs(dl_path, exist_ok=True)
     #get video duration
