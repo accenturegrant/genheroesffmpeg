@@ -50,6 +50,7 @@ def upload_file():
     try:
         file = request.files['file']
         upload_audio(file, uuid)
+        print(f"Upload completed: {uuid}.wav")
     #    response = s3_client.generate_presigned_post(
     #        S3_BUCKET,
     #        object_name,
@@ -115,15 +116,11 @@ def download_audio(audio_url, uuid):
 
 def upload_video(video_dl, video_uuid):
     s3 = boto3.client('s3')
-    filename=f"{video_uuid}.mp4"
-    print('Uploading to S3: ' + filename)
-    res = s3.upload_file(video_dl, S3_BUCKET, filename)
+    res = s3.upload_file(video_dl, S3_BUCKET, f"{video_uuid}.mp4")
 
 def upload_audio(audio_dl, audio_uuid):
     s3 = boto3.client('s3')
-    filename=f"{audio_uuid}.wav"
-    print('Uploading to S3: ' + filename)
-    res = s3.upload_fileobj(audio_dl, S3_BUCKET, filename)
+    res = s3.upload_fileobj(audio_dl, S3_BUCKET, f"{audio_uuid}.wav")
 
 def verify_secret(secret):
     #this could be better
