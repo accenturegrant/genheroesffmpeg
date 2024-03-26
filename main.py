@@ -50,7 +50,6 @@ def upload_file():
     try:
         file = request.files['file']
         upload_audio(file, uuid)
-        print(f"Upload completed: {uuid}.wav")
     #    response = s3_client.generate_presigned_post(
     #        S3_BUCKET,
     #        object_name,
@@ -97,7 +96,7 @@ def download_images(scenes, uuid):
     for scene_index, scene in enumerate(scenes):
         for image_index, img in enumerate(scene.get('images', [])):
             filename = 'tmp/{}/images/scene{}_{}.jpg'.format(uuid, scene_index, image_index)
-            print(filename)
+            print('Downloading: ' + filename)
             res = requests.get(img)
             with open(filename, 'wb') as file:
                 file.write(res.content)
@@ -108,6 +107,7 @@ def download_audio(audio_url, uuid):
     directory = os.path.join("tmp",uuid,"audio")
     os.makedirs(directory, exist_ok=True)
     filename = 'tmp/{}/audio/{}.m4a'.format(uuid, uuid)
+    print('Downloading: ' + filename)
     res = requests.get(audio_url)
     with open(filename, 'wb') as file:
         file.write(res.content)
@@ -115,11 +115,15 @@ def download_audio(audio_url, uuid):
 
 def upload_video(video_dl, video_uuid):
     s3 = boto3.client('s3')
-    res = s3.upload_file(video_dl, S3_BUCKET, f"{video_uuid}.mp4")
+    filename=f"{video_uuid}.mp4"
+    print('Uploading to S3: ' + filename)
+    res = s3.upload_file(video_dl, S3_BUCKET, filename)
 
 def upload_audio(audio_dl, audio_uuid):
     s3 = boto3.client('s3')
-    res = s3.upload_fileobj(audio_dl, S3_BUCKET, f"{audio_uuid}.wav")
+    filename=f"{video_uuid}.wav"
+    print('Uploading to S3: ' + filename)
+    res = s3.upload_fileobj(audio_dl, S3_BUCKET, filename)
 
 def verify_secret(secret):
     #this could be better

@@ -13,8 +13,8 @@ DIALOG_END_PAD = 4
 TRANSITION_DIV = 1
 
 SOUNDTRACK = "./music/AdobeSummit2024_Music.mp3"
-WWW_ROOT = "/var/www/html"
-#WWW_ROOT = "./output"
+#WWW_ROOT = "/var/www/html"
+WWW_ROOT = "./output"
 
 def do_ffmpeg(images, audio_file, uuid, color="colorful", duration=DEFAULT_DURATION, frame_rate=DEFAULT_FRAME_RATE, video_resolution=DEFAULT_RESOLUTION, soundtrack=SOUNDTRACK):
     stream_path = os.path.realpath( os.path.join(WWW_ROOT, 'streams', uuid) )
@@ -80,7 +80,7 @@ def make_ffmpeg_command(images, audio_file, uuid, stream_path, dl_path, color, d
                 f"hd{c}" if c == 0 else f"f{c}",
                 c + 1,
                 trans_dur_sec,
-                offset_duration * (c),
+                offset_duration * (c + 1),
                 c + 1
             )
         )]
@@ -94,6 +94,8 @@ def make_ffmpeg_command(images, audio_file, uuid, stream_path, dl_path, color, d
 
     #ffmpeg args
     ffmpeg_encode_args = [
+        "-loglevel", "quiet",
+        "-stats",
         "-acodec", "ac3",
         "-vcodec", "libx264",
         "-pix_fmt", "yuvj420p",
