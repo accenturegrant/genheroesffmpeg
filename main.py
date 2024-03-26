@@ -121,7 +121,7 @@ def upload_video(video_dl, video_uuid):
 
 def upload_audio(audio_dl, audio_uuid):
     s3 = boto3.client('s3')
-    filename=f"{video_uuid}.wav"
+    filename=f"{audio_uuid}.wav"
     print('Uploading to S3: ' + filename)
     res = s3.upload_fileobj(audio_dl, S3_BUCKET, filename)
 
